@@ -14,6 +14,7 @@ import {
   Linkedin,
   ChevronRight,
 } from "lucide-react";
+import { helpNowServices } from "@/data/helpNowServices";
 const callIcon = "/assets/icons/call.png";
 const mapIcon = "/assets/icons/maps.png";
 const playIcon = "/assets/icons/play.png";
@@ -69,16 +70,8 @@ export function Footer() {
     { label: "Refund & Cancellation", href: "#" },
   ];
 
-  const popularServices = [
-    { label: "Dish Washing", href: "/dish-washing" },
-    { label: "Kitchen Cleaning", href: "/#services" },
-    { label: "Fan Cleaning", href: "/#services" },
-    { label: "Window Cleaning", href: "/#services" },
-    { label: "Laundry & Ironing", href: "/#services" },
-    { label: "Balcony & Floor Mopping", href: "/#services" },
-    { label: "Deep Kitchen Scrubbing", href: "/#services" },
-    { label: "Hourly Maid On-Demand", href: "/#services" },
-  ];
+  // Every Help Now service page.
+  const popularServices = helpNowServices.map((s) => ({ label: s.name, href: `/services/${s.slug}` }));
 
   return (
     <footer

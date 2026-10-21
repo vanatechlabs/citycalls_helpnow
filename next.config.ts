@@ -12,13 +12,14 @@ const nextConfig: NextConfig = {
     root: path.join(__dirname),
   },
 
-  // Old URLs that served the same pages — keep them working.
+  // Old URLs that served the same pages — keep them working. Service pages
+  // live at /services/<slug> (src/data/helpNowServices.ts).
   async redirects() {
     return [
       { source: "/help-now", destination: "/", permanent: true },
-      { source: "/help-now/dish-washing", destination: "/dish-washing", permanent: true },
-      { source: "/help-now/services/dish-washing", destination: "/dish-washing", permanent: true },
-      { source: "/services/dish-washing", destination: "/dish-washing", permanent: true },
+      { source: "/dish-washing", destination: "/services/dish-washing", permanent: true },
+      { source: "/help-now/dish-washing", destination: "/services/dish-washing", permanent: true },
+      { source: "/help-now/services/:slug", destination: "/services/:slug", permanent: true },
     ];
   },
 };

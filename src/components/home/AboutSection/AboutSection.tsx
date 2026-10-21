@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ShieldCheck, Lock, Star, Zap } from "lucide-react";
+import { helpNowImageUrl, type HelpNowAbout } from "@/lib/api/helpNowHome";
 const ab1 = "/assets/Images/ab1.png";
 const ab2 = "/assets/Images/ab2.png";
 const ab3 = "/assets/Images/ab3.png";
@@ -69,7 +70,38 @@ const points = [
   "Complete satisfaction guarantee — hassle-free re-cleaning support",
 ];
 
-export function AboutSection() {
+// Built-in content, shown if the CMS (Admin → Website Section → Help Now)
+// can't be reached.
+const defaultAbout: HelpNowAbout = {
+  eyebrow: "About HelpNow",
+  heading: "A Part of CityCalls —",
+  highlight: "CityCalls",
+  headingLine2: "Trusted by Thousands of Homes",
+  description:
+    "HelpNow is the maid services division of CityCalls. With a legacy of trust and quality, we bring you reliable, background-verified maids for all your cleaning needs. Flexible hourly booking, transparent pricing, and a hassle-free experience — that's the HelpNow promise.",
+  points,
+  cards: trustPoints.map((t) => ({ title: t.title, description: t.desc, image: t.image, alt: t.title })),
+};
+
+function Heading({ heading, highlight }: { heading: string; highlight: string }) {
+  const index = highlight ? heading.indexOf(highlight) : -1;
+  if (index < 0) return <>{heading}</>;
+  return (
+    <>
+      {heading.slice(0, index)}
+      <span>{highlight}</span>
+      {heading.slice(index + highlight.length)}
+    </>
+  );
+}
+
+// `about` comes from the CMS via the home page: undefined means it couldn't
+// be reached (built-in content), null means the section is switched off.
+export function AboutSection({ about = defaultAbout }: { about?: HelpNowAbout | null } = {}) {
+  if (!about) return null;
+  // Each card keeps the entrance animation of its grid position.
+  const cards = about.cards.map((card, i) => ({ ...card, animation: trustPoints[i % trustPoints.length].animation }));
+
   return (
     <>
       <style>{`
@@ -206,19 +238,19 @@ export function AboutSection() {
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.65, ease: "easeOut" }}
           >
-            <div className="hn-section-tag">About HelpNow</div>
+            {about.eyebrow && <div className="hn-section-tag">{about.eyebrow}</div>}
             <h2 className="hn-section-title">
-              A Part of <span>CityCalls</span> —<br />
-              Trusted by Thousands of Homes
+              <Heading heading={about.heading} highlight={about.highlight} />
+              {about.headingLine2 && (
+                <>
+                  <br />
+                  {about.headingLine2}
+                </>
+              )}
             </h2>
-            <p className="hn-about-text">
-              HelpNow is the maid services division of CityCalls. With a legacy of trust and quality,
-              we bring you reliable, background-verified maids for all your cleaning needs. Flexible
-              hourly booking, transparent pricing, and a hassle-free experience — that's the HelpNow
-              promise.
-            </p>
+            {about.description && <p className="hn-about-text">{about.description}</p>}
             <div className="hn-about-points">
-              {points.map((p, i) => (
+              {about.points.map((p, i) => (
                 <motion.div
                   key={p}
                   initial={{ opacity: 0, x: -20 }}
@@ -235,7 +267,7 @@ export function AboutSection() {
 
           {/* Right 2x2 Cards Grid - Each with a DIFFERENT Animation */}
           <div className="hn-about-right">
-            {trustPoints.map((t, idx) => (
+            {cards.map((t) => (
               <motion.div
                 key={t.title}
                 className="hn-trust-card"
@@ -252,10 +284,10 @@ export function AboutSection() {
                 }}
               >
                 <div className="hn-card-img-wrap">
-                  <img src={t.image} alt={t.title} loading="lazy" />
+                  {t.image && <img src={helpNowImageUrl(t.image, 800)} alt={t.alt || t.title} loading="lazy" />}
                 </div>
                 <h4>{t.title}</h4>
-                <p>{t.desc}</p>
+                <p>{t.description}</p>
               </motion.div>
             ))}
           </div>

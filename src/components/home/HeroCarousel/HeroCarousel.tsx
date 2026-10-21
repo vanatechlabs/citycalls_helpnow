@@ -1,12 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, ShieldCheck, Clock, Star, Zap, Sparkles, BookOpen } from "lucide-react";
+import {
+  ChevronLeft, ChevronRight, ShieldCheck, Clock, Star, Zap, Sparkles, BookOpen, BadgeCheck, Heart, Home, Users,
+  type LucideIcon,
+} from "lucide-react";
+import { helpNowImageUrl, type HelpNowHeroSlide, type HelpNowMarquee } from "@/lib/api/helpNowHome";
 const h1 = "/assets/Banner/h1.png";
 const h2 = "/assets/Banner/h2.png";
 const h3 = "/assets/Banner/h3.png";
 
-const slides = [
+interface Slide {
+  id: number;
+  image: string;
+  alt?: string;
+  badge: string;
+  title: string[];
+  description: string;
+  buttons?: { primary?: { text: string; link: string }; secondary?: { text: string; link: string } };
+}
+
+// Built-in content, shown if the CMS (Admin → Website Section → Help Now)
+// can't be reached.
+const defaultSlides: Slide[] = [
   {
     id: 1,
     image: h1,
@@ -33,6 +49,38 @@ const slides = [
   },
 ];
 
+const MARQUEE_ICONS: Record<string, LucideIcon> = { BookOpen, Clock, ShieldCheck, Star, Sparkles, BadgeCheck, Heart, Home, Zap, Users };
+
+const defaultMarquee: HelpNowMarquee = {
+  items: [
+    { icon: "BookOpen", label: "Book trusted maids by the hour" },
+    { icon: "Clock", label: "Flexible timings" },
+    { icon: "ShieldCheck", label: "Safe & secure" },
+    { icon: "Star", label: "100% satisfaction" },
+    { icon: "Sparkles", label: "A part of CityCalls" },
+  ],
+};
+
+const DEFAULT_BUTTONS = {
+  primary: { text: "Book Service Now", link: "#services" },
+  secondary: { text: "Explore Process", link: "#how-it-works" },
+};
+
+function fromCms(slides: HelpNowHeroSlide[]): Slide[] {
+  return slides.map((slide, i) => ({
+    id: i + 1,
+    image: helpNowImageUrl(slide.image),
+    alt: slide.alt,
+    badge: slide.badge,
+    title: [slide.titleLine1, slide.titleLine2],
+    description: slide.description,
+    buttons: {
+      primary: slide.primaryButtonText ? { text: slide.primaryButtonText, link: slide.primaryButtonLink || "#services" } : undefined,
+      secondary: slide.secondaryButtonText ? { text: slide.secondaryButtonText, link: slide.secondaryButtonLink || "#how-it-works" } : undefined,
+    },
+  }));
+}
+
 const trustBadges = [
   { icon: ShieldCheck, label: "Verified Maids" },
   { icon: Clock, label: "Hourly Service" },
@@ -42,7 +90,10 @@ const trustBadges = [
 
 const INTERVAL = 6000;
 
-export function HeroCarousel() {
+// `cmsSlides` / `marquee` come from the CMS via the home page; undefined
+// means it couldn't be reached (built-in content), a null marquee is hidden.
+export function HeroCarousel({ cmsSlides, marquee = defaultMarquee }: { cmsSlides?: HelpNowHeroSlide[]; marquee?: HelpNowMarquee | null } = {}) {
+  const slides = cmsSlides?.length ? fromCms(cmsSlides) : defaultSlides;
   const [current, setCurrent] = useState(0);
   const [key, setKey] = useState(0);
 
@@ -52,7 +103,7 @@ export function HeroCarousel() {
       setKey((k) => k + 1);
     }, INTERVAL);
     return () => clearInterval(t);
-  }, []);
+  }, [slides.length]);
 
   const handleSlideChange = (index: number) => {
     setCurrent(index);
@@ -69,7 +120,8 @@ export function HeroCarousel() {
     setKey((k) => k + 1);
   };
 
-  const slide = slides[current];
+  const slide = slides[current] ?? slides[0];
+  const buttons = slide.buttons ?? DEFAULT_BUTTONS;
 
   return (
     <>
@@ -410,6 +462,8 @@ export function HeroCarousel() {
         <div className="hn-hero-bg-container" key={`bg-${key}`}>
           <div
             className="hn-hero-bg"
+            role="img"
+            aria-label={slide.alt || `${slide.title.join(" ")} — Help Now`}
             style={{ backgroundImage: `url(${slide.image})` }}
           />
         </div>
@@ -442,14 +496,18 @@ export function HeroCarousel() {
 
             {/* Buttons */}
             <div className="hn-hero-btns hn-anim-btns">
-              <a href="#services" className="hn-btn-cc-gold">
-                <span>Book Service Now</span>
-                <ChevronRight size={15} />
-              </a>
-              <a href="#how-it-works" className="hn-btn-cc-outline">
-                <span>Explore Process</span>
-                <Sparkles size={14} />
-              </a>
+              {buttons.primary && (
+                <a href={buttons.primary.link} className="hn-btn-cc-gold">
+                  <span>{buttons.primary.text}</span>
+                  <ChevronRight size={15} />
+                </a>
+              )}
+              {buttons.secondary && (
+                <a href={buttons.secondary.link} className="hn-btn-cc-outline">
+                  <span>{buttons.secondary.text}</span>
+                  <Sparkles size={14} />
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -467,29 +525,23 @@ export function HeroCarousel() {
         </div>
       </section>
 
-      {/* Marquee Strip */}
-      <div className="hn-strip">
-        <div className="hn-strip-track">
-          {[
-            { Icon: BookOpen, label: "Book trusted maids by the hour" },
-            { Icon: Clock, label: "Flexible timings" },
-            { Icon: ShieldCheck, label: "Safe & secure" },
-            { Icon: Star, label: "100% satisfaction" },
-            { Icon: Sparkles, label: "A part of CityCalls" },
-            { Icon: BookOpen, label: "Book trusted maids by the hour" },
-            { Icon: Clock, label: "Flexible timings" },
-            { Icon: ShieldCheck, label: "Safe & secure" },
-            { Icon: Star, label: "100% satisfaction" },
-            { Icon: Sparkles, label: "A part of CityCalls" },
-          ].map((item, i) => (
-            <div key={i} className="hn-strip-item">
-              <item.Icon size={14} className="hn-strip-icon" />
-              <span>{item.label}</span>
-              <span className="hn-strip-dot">✦</span>
-            </div>
-          ))}
+      {/* Marquee Strip — the items twice over, for a seamless loop */}
+      {marquee && marquee.items.length > 0 && (
+        <div className="hn-strip">
+          <div className="hn-strip-track">
+            {[...marquee.items, ...marquee.items].map((item, i) => {
+              const Icon = MARQUEE_ICONS[item.icon] ?? Sparkles;
+              return (
+                <div key={i} className="hn-strip-item" aria-hidden={i >= marquee.items.length || undefined}>
+                  <Icon size={14} className="hn-strip-icon" />
+                  <span>{item.label}</span>
+                  <span className="hn-strip-dot">✦</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

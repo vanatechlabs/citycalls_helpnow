@@ -4,12 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Utensils,
-  ChefHat,
-  Fan,
-  AppWindow,
-  Shirt,
-  SprayCan,
   ArrowRight,
   ChevronLeft,
   ChevronRight,
@@ -19,76 +13,21 @@ import {
   Heart,
   Sparkles,
 } from "lucide-react";
+import { helpNowServices, type HelpNowServiceSlug } from "@/data/helpNowServices";
 import { BookingModal } from "@/components/booking/BookingModal";
-const h1 = "/assets/Images/h1.png";
-const h2 = "/assets/Images/h2.png";
-const h3 = "/assets/Images/h3.png";
-const h4 = "/assets/Images/h4.png";
-const h5 = "/assets/Images/h5.png";
 
-const services = [
-  {
-    id: 1,
-    slug: "kitchen-cleaning",
-    icon: Utensils,
-    name: "Dish Washing",
-    short: "Sparkling clean utensils with thorough hygiene and grease removal.",
-    price: "₹159/hr",
-    image: h1,
-    hoverImage: h2,
-  },
-  {
-    id: 2,
-    slug: "kitchen-cleaning",
-    icon: ChefHat,
-    name: "Kitchen Cleaning",
-    short: "Deep clean of kitchen surfaces, counters, stovetops & sink area.",
-    price: "₹199/hr",
-    popular: true,
-    image: h2,
-    hoverImage: h3,
-  },
-  {
-    id: 3,
-    slug: "kitchen-cleaning",
-    icon: Fan,
-    name: "Fan Cleaning",
-    short: "Remove fan dust, dirt & grime thoroughly from high ceilings.",
-    price: "₹149/hr",
-    image: h3,
-    hoverImage: h4,
-  },
-  {
-    id: 4,
-    slug: "kitchen-cleaning",
-    icon: AppWindow,
-    name: "Window Cleaning",
-    short: "Crystal clear window glass, mesh wiping & frame cleaning.",
-    price: "₹179/hr",
-    image: h4,
-    hoverImage: h5,
-  },
-  {
-    id: 5,
-    slug: "kitchen-cleaning",
-    icon: Shirt,
-    name: "Laundry & Ironing",
-    short: "Wash, dry & steam iron clothes to perfection for daily wear.",
-    price: "₹199/hr",
-    image: h5,
-    hoverImage: h1,
-  },
-  {
-    id: 6,
-    slug: "kitchen-cleaning",
-    icon: SprayCan,
-    name: "Floor Mopping",
-    short: "Gleaming & sanitized floors with premium fragrant floor cleaners.",
-    price: "₹149/hr",
-    image: h1,
-    hoverImage: h2,
-  },
-];
+// One card per Help Now service page; the hover image is the next service's.
+const services = helpNowServices.map((service, i) => ({
+  id: i + 1,
+  slug: service.slug,
+  href: `/services/${service.slug}`,
+  name: service.name,
+  short: service.short,
+  price: `₹${service.ratePerHour}/hr`,
+  popular: service.slug === "dish-washing",
+  image: service.image,
+  hoverImage: helpNowServices[(i + 1) % helpNowServices.length].image,
+}));
 
 const headingWords = ["Choose", "Your", "Cleaning", "Service"];
 const highlightWords = ["—", "one", "tap", "away."];
@@ -111,8 +50,9 @@ export function ServicesGrid() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  // Booking modal for the clicked service.
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedSlug, setSelectedSlug] = useState("kitchen-cleaning");
+  const [selectedSlug, setSelectedSlug] = useState<HelpNowServiceSlug>(helpNowServices[0].slug);
 
   const sectionRef = useRef(null);
 
@@ -139,17 +79,17 @@ export function ServicesGrid() {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
+  const handleOpenBooking = (slug: HelpNowServiceSlug) => {
+    setSelectedSlug(slug);
+    setModalOpen(true);
+  };
+
   const handlePrevious = () => {
     setScrollPosition((prev) => Math.max(0, prev - 320));
   };
 
   const handleNext = () => {
     setScrollPosition((prev) => prev + 320);
-  };
-
-  const handleOpenBooking = (slug: string) => {
-    setSelectedSlug(slug);
-    setModalOpen(true);
   };
 
   return (
@@ -286,47 +226,25 @@ export function ServicesGrid() {
                   >
                     {/* Image with Hover Change & Overlay */}
                     <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 cursor-pointer">
-                      {service.name === "Dish Washing" ? (
-                        <Link href="/dish-washing" className="absolute inset-0 z-0">
-                          {/* Default Image */}
-                          <img
-                            src={service.image}
-                            alt={service.name}
-                            className={`w-full h-full object-cover absolute inset-0 transition-all duration-700 ${
-                              hoveredId === index ? "opacity-0 scale-110" : "opacity-100 scale-100"
-                            }`}
-                          />
+                      <button type="button" onClick={() => handleOpenBooking(service.slug)} className="absolute inset-0 z-0 cursor-pointer" aria-label={`Book ${service.name}`}>
+                        {/* Default Image */}
+                        <img
+                          src={service.image}
+                          alt={service.name}
+                          className={`w-full h-full object-cover absolute inset-0 transition-all duration-700 ${
+                            hoveredId === index ? "opacity-0 scale-110" : "opacity-100 scale-100"
+                          }`}
+                        />
 
-                          {/* Hover Image */}
-                          <img
-                            src={service.hoverImage}
-                            alt={`${service.name} preview`}
-                            className={`w-full h-full object-cover absolute inset-0 transition-all duration-700 ${
-                              hoveredId === index ? "opacity-100 scale-100" : "opacity-0 scale-110"
-                            }`}
-                          />
-                        </Link>
-                      ) : (
-                        <>
-                          {/* Default Image */}
-                          <img
-                            src={service.image}
-                            alt={service.name}
-                            className={`w-full h-full object-cover absolute inset-0 transition-all duration-700 ${
-                              hoveredId === index ? "opacity-0 scale-110" : "opacity-100 scale-100"
-                            }`}
-                          />
-
-                          {/* Hover Image */}
-                          <img
-                            src={service.hoverImage}
-                            alt={`${service.name} preview`}
-                            className={`w-full h-full object-cover absolute inset-0 transition-all duration-700 ${
-                              hoveredId === index ? "opacity-100 scale-100" : "opacity-0 scale-110"
-                            }`}
-                          />
-                        </>
-                      )}
+                        {/* Hover Image */}
+                        <img
+                          src={service.hoverImage}
+                          alt=""
+                          className={`w-full h-full object-cover absolute inset-0 transition-all duration-700 ${
+                            hoveredId === index ? "opacity-100 scale-100" : "opacity-0 scale-110"
+                          }`}
+                        />
+                      </button>
 
                       {/* Most Booked Badge */}
                       {service.popular && (
@@ -344,38 +262,24 @@ export function ServicesGrid() {
                         <button className="p-1.5 bg-white/95 rounded-full hover:bg-white text-slate-800 transition-colors shadow-md cursor-pointer">
                           <Heart size={13} className="hover:text-red-500" />
                         </button>
-                        {service.name === "Dish Washing" ? (
-                          <Link
-                            href="/dish-washing"
-                            className="p-1.5 bg-white/95 rounded-full hover:bg-[#f5a623] hover:text-white text-slate-800 transition-colors shadow-md cursor-pointer flex items-center justify-center"
-                          >
-                            <Eye size={13} />
-                          </Link>
-                        ) : (
-                          <button
-                            onClick={() => handleOpenBooking(service.slug)}
-                            className="p-1.5 bg-white/95 rounded-full hover:bg-[#f5a623] hover:text-white text-slate-800 transition-colors shadow-md cursor-pointer"
-                          >
-                            <Eye size={13} />
-                          </button>
-                        )}
+                        <Link
+                          href={service.href}
+                          aria-label={`View ${service.name} page`}
+                          className="p-1.5 bg-white/95 rounded-full hover:bg-[#f5a623] hover:text-white text-slate-800 transition-colors shadow-md cursor-pointer flex items-center justify-center"
+                        >
+                          <Eye size={13} />
+                        </Link>
                       </div>
                     </div>
 
                     {/* Card Content */}
                     <div className="p-4 pt-3.5">
                       <div className="flex items-center justify-between mb-1">
-                        {service.name === "Dish Washing" ? (
-                          <Link href="/dish-washing" className="block">
-                            <h3 className="text-[16px] font-bold text-slate-900 group-hover:text-[#b5730f] uppercase tracking-wider transition-colors duration-300">
-                              {service.name}
-                            </h3>
-                          </Link>
-                        ) : (
+                        <button type="button" onClick={() => handleOpenBooking(service.slug)} className="block text-left cursor-pointer">
                           <h3 className="text-[16px] font-bold text-slate-900 group-hover:text-[#b5730f] uppercase tracking-wider transition-colors duration-300">
                             {service.name}
                           </h3>
-                        )}
+                        </button>
                       </div>
 
                       <p className="text-slate-500 text-[12.5px] leading-relaxed mb-3 line-clamp-2 min-h-[38px]">
@@ -392,23 +296,14 @@ export function ServicesGrid() {
                           </span>
                         </div>
 
-                        {service.name === "Dish Washing" ? (
-                          <Link
-                            href="/dish-washing"
-                            className="inline-flex items-center gap-1.5 text-[#b5730f] text-[11px] font-bold uppercase tracking-widest hover:text-slate-900 transition-colors duration-300 cursor-pointer"
-                          >
-                            Book Service
-                            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-300" />
-                          </Link>
-                        ) : (
-                          <button
-                            onClick={() => handleOpenBooking(service.slug)}
-                            className="inline-flex items-center gap-1.5 text-[#b5730f] text-[11px] font-bold uppercase tracking-widest hover:text-slate-900 transition-colors duration-300 cursor-pointer"
-                          >
-                            Book Service
-                            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-300" />
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenBooking(service.slug)}
+                          className="inline-flex items-center gap-1.5 text-[#b5730f] text-[11px] font-bold uppercase tracking-widest hover:text-slate-900 transition-colors duration-300 cursor-pointer"
+                        >
+                          Book Service
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-300" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -420,11 +315,7 @@ export function ServicesGrid() {
       </section>
 
       {/* Booking Drawer / Modal */}
-      <BookingModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        serviceSlug={selectedSlug}
-      />
+      <BookingModal isOpen={modalOpen} onClose={() => setModalOpen(false)} serviceSlug={selectedSlug} />
     </>
   );
 }

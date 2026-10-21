@@ -9,21 +9,26 @@ import { Reviews } from "@/components/home/Reviews/Reviews";
 import { DownloadApp } from "@/components/home/DownloadApp/DownloadApp";
 import { Faq } from "@/components/shared/Faq/Faq";
 import { Footer } from "@/components/layout/Footer/Footer";
+import { fetchHelpNowHome } from "@/lib/api/helpNowHome";
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Admin → Website Section → Help Now. null (API down) keeps each section's
+  // built-in content.
+  const content = await fetchHelpNowHome();
+
   return (
     <div style={{ fontFamily: "var(--font-inter), ui-sans-serif, system-ui, sans-serif" }}>
       {/* <Topbar /> — hidden on the live site; import from "@/components/layout/Topbar/Topbar" to enable. */}
       <Navbar />
-      <HeroCarousel />
-      <AboutSection />
-      <WhyChooseUs />
+      <HeroCarousel cmsSlides={content?.hero.slides} marquee={content ? content.marquee : undefined} />
+      <AboutSection about={content ? content.about : undefined} />
+      <WhyChooseUs services={content ? content.services : undefined} />
       <ServicesGrid />
       <HowItWorks />
       <Pricing />
-      <Reviews />
+      <Reviews testimonials={content ? content.testimonials : undefined} />
       <DownloadApp />
-      <Faq />
+      <Faq faq={content ? content.faq : undefined} />
       <Footer />
     </div>
   );

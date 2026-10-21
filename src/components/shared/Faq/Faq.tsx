@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Minus, HelpCircle } from "lucide-react";
+import { helpNowImageUrl, type HelpNowFaq } from "@/lib/api/helpNowHome";
 
 const h1 = "/assets/Images/h1.png";
 const h2 = "/assets/Images/h2.png";
@@ -45,8 +46,34 @@ const faqs = [
   },
 ];
 
-export function Faq() {
+// Built-in content, shown if the CMS (Admin → Website Section → Help Now →
+// Help Now FAQ) can't be reached.
+const defaultFaq: HelpNowFaq = {
+  eyebrow: "Support & Info",
+  heading: "Frequently Asked Questions",
+  highlight: "Questions",
+  description: "Find answers to common inquiries about booking, services, and policies with HelpNow.",
+  items: faqs.map((f) => ({ question: f.q, answer: f.a, image: f.image, alt: f.q })),
+};
+
+function Heading({ heading, highlight }: { heading: string; highlight: string }) {
+  const index = highlight ? heading.indexOf(highlight) : -1;
+  if (index < 0) return <>{heading}</>;
+  return (
+    <>
+      {heading.slice(0, index)}
+      <span className="text-[#f5a623]">{highlight}</span>
+      {heading.slice(index + highlight.length)}
+    </>
+  );
+}
+
+// `faq` comes from the CMS via the home page: undefined means it couldn't be
+// reached (built-in content), null means it's switched off.
+export function Faq({ faq = defaultFaq }: { faq?: HelpNowFaq | null } = {}) {
   const [activeIndex, setActiveIndex] = useState<number | null>(0);
+  if (!faq || faq.items.length === 0) return null;
+  const items = faq.items.map((item) => ({ q: item.question, a: item.answer, image: item.image ? helpNowImageUrl(item.image, 900) : "", alt: item.alt || item.question }));
 
   return (
     <section className="py-14 md:py-20 bg-white border-t border-slate-200 relative overflow-hidden" id="faq">
@@ -60,22 +87,22 @@ export function Faq() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="h-px w-8 bg-[#f5a623]" />
             <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#b5730f]">
-              Support & Info
+              {faq.eyebrow}
             </span>
             <div className="h-px w-8 bg-[#f5a623]" />
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-[40px] font-sans font-black uppercase tracking-tight text-slate-900 leading-tight">
-            Frequently Asked <span className="text-[#f5a623]">Questions</span>
+            <Heading heading={faq.heading} highlight={faq.highlight} />
           </h2>
           <p className="mt-3 text-slate-600 max-w-2xl mx-auto text-[14px] md:text-[15px] font-medium leading-relaxed">
-            Find answers to common inquiries about booking, services, and policies with HelpNow.
+            {faq.description}
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           {/* LEFT COLUMN: Accordions */}
           <div className="lg:col-span-7 space-y-3">
-            {faqs.map((item, index) => {
+            {items.map((item, index) => {
               const isActive = activeIndex === index;
               return (
                 <motion.div
@@ -151,19 +178,10 @@ export function Faq() {
                     transition={{ duration: 0.35, ease: "easeOut" }}
                     className="absolute inset-0 bg-slate-50"
                   >
-                    {activeIndex !== null && faqs[activeIndex]?.image ? (
-                      <img
-                        src={faqs[activeIndex].image}
-                        alt={faqs[activeIndex]?.q}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <img
-                        src={faqs[0].image}
-                        alt="FAQ"
-                        className="w-full h-full object-cover"
-                      />
-                    )}
+                    {(() => {
+                      const shown = (activeIndex !== null && items[activeIndex]?.image ? items[activeIndex] : items.find((i) => i.image)) ?? null;
+                      return shown ? <img src={shown.image} alt={shown.alt} className="w-full h-full object-cover" /> : null;
+                    })()}
                   </motion.div>
                 </AnimatePresence>
               </div>

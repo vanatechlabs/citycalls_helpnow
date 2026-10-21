@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Star, Quote } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import type { HelpNowTestimonial } from "@/lib/api/helpNowHome";
 const getInitials = (name: string) => {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) {
@@ -242,15 +243,17 @@ const ReviewCard = ({
   );
 };
 
-export function Reviews() {
+// `testimonials` come from Admin → Pages Section → Testimonials (website:
+// Help Now); undefined means the CMS couldn't be reached (built-in reviews).
+export function Reviews({ testimonials }: { testimonials?: HelpNowTestimonial[] } = {}) {
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+  const reviews: ReviewItem[] = testimonials
+    ? testimonials.map((t) => ({ name: t.name, service: t.role, rating: t.rating, text: t.message, area: t.location || undefined }))
+    : reviewsData;
 
   // Duplicate reviews to make marquee loop seamlessly
-  const marqueeReviews = [
-    ...reviewsData,
-    ...reviewsData,
-    ...reviewsData,
-  ];
+  const marqueeReviews = [...reviews, ...reviews, ...reviews];
+  if (reviews.length === 0) return null;
 
   return (
     <section

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { helpNowImageUrl, type HelpNowServiceCards } from "@/lib/api/helpNowHome";
 const ab1 = "/assets/Images/h1.png";
 const ab2 = "/assets/Images/h2.png";
 const ab3 = "/assets/Images/h3.png";
@@ -61,15 +62,32 @@ const projects = [
   },
 ];
 
-export function WhyChooseUs() {
+// Built-in content, shown if the CMS (Admin → Website Section → Help Now)
+// can't be reached.
+const defaultCards: HelpNowServiceCards = {
+  cards: projects.map((p) => ({
+    title: p.title,
+    subtitle: p.subtitle,
+    subtitle2: p.subtitle2,
+    description: p.description,
+    image: p.image,
+    alt: [p.title, p.subtitle, p.subtitle2].filter(Boolean).join(" "),
+  })),
+};
+
+// `services` comes from the CMS via the home page: undefined means it
+// couldn't be reached (built-in content), null means it's switched off.
+export function WhyChooseUs({ services = defaultCards }: { services?: HelpNowServiceCards | null } = {}) {
   const [hovered, setHovered] = useState<number | null>(null);
+  if (!services?.cards.length) return null;
+  const cards = services.cards.map((card, i) => ({ ...card, id: i + 1 }));
 
   return (
     <section className="relative w-full" style={{ background: "#ffffff", paddingTop: "60px" }}>
       <div className="flex w-full gap-0 overflow-hidden" style={{ height: "560px" }}>
-          {projects.map((project, index) => {
+          {cards.map((project, index) => {
             const isHovered = hovered === index;
-            const originClass = index < 3 ? "origin-left" : "origin-right";
+            const originClass = index < Math.ceil(cards.length / 2) ? "origin-left" : "origin-right";
 
             return (
               <motion.div
@@ -82,8 +100,8 @@ export function WhyChooseUs() {
               >
                 {/* IMAGE */}
                 <motion.img
-                  src={project.image}
-                  alt={project.title}
+                  src={helpNowImageUrl(project.image, 1200)}
+                  alt={project.alt || project.title}
                   className="absolute inset-0 w-full h-full object-cover"
                   animate={{ scale: isHovered ? 1.08 : 1 }}
                   transition={{ duration: 1.5 }}
