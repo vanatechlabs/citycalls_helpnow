@@ -74,7 +74,7 @@ export function HelpNowBookingFlow({
               <span className="text-[16px] text-[#0D47A1] mt-0.5 whitespace-nowrap">- {service.name}</span>
             </h2>
             <p className="text-ink/60 text-xs mt-1.5 font-medium">
-              Verified maids <span className="inline-block w-1 h-1 rounded-full bg-black/20 mx-1 align-middle" /> ₹{service.ratePerHour}/hr per maid{" "}
+              Verified helpers <span className="inline-block w-1 h-1 rounded-full bg-black/20 mx-1 align-middle" /> ₹{b.ratePerHour}/hr per helper{" "}
               <span className="inline-block w-1 h-1 rounded-full bg-black/20 mx-1 align-middle" /> Same-day service available
             </p>
           </div>

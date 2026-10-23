@@ -73,10 +73,10 @@ export function Step1({ b }: { b: HelpNowBooking }) {
               <Users className="h-4 w-4 text-[#f5a623]" />
               Select Maids & Duration
             </h3>
-            <p className="mt-0.5 text-[11px] font-medium text-slate-500">Choose your home, maids, hours and what needs doing.</p>
+            <p className="mt-0.5 text-[11px] font-medium text-slate-500">Choose your home, helpers, hours and what needs doing.</p>
           </div>
           <span className="shrink-0 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-600">
-            ₹{service.ratePerHour} / hr per maid
+            ₹{b.ratePerHour} / hr per helper
           </span>
         </div>
 

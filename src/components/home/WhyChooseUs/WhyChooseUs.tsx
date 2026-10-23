@@ -107,14 +107,14 @@ export function WhyChooseUs({ services = defaultCards }: { services?: HelpNowSer
                   transition={{ duration: 1.5 }}
                 />
 
-                {/* DARK GRADIENT OVERLAY */}
+                {/* Light neutral shade at the bottom, just enough for the white text */}
                 <div
                   className={`absolute inset-0 transition-opacity duration-500 ${
-                    isHovered ? "opacity-100" : "opacity-75"
+                    isHovered ? "opacity-100" : "opacity-80"
                   }`}
                   style={{
                     background:
-                      "linear-gradient(to top, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.48) 45%, rgba(15,23,42,0.12) 100%)",
+                      "linear-gradient(to top, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.22) 40%, rgba(0,0,0,0) 70%)",
                   }}
                 />
 

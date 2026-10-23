@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { SITE_NAME, SITE_URL } from "@/lib/seo/helpNowSeo";
+import { fetchHelpNowRates } from "@/lib/api/helpNowRates";
+import { HelpNowRatesProvider } from "@/components/rates/HelpNowRates";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -8,32 +11,44 @@ const inter = Inter({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
+// Site-wide defaults; each page (and Admin → SEO Manager, "Help Now Website")
+// can override them.
+const DEFAULT_TITLE = "Help Now | House Help & Home Cleaning Services in Delhi NCR";
+const DEFAULT_DESCRIPTION =
+  "Book verified house help by the hour for home cleaning, dish washing, kitchen help, bathroom cleaning and laundry across Delhi, Noida, Gurugram, Ghaziabad and Faridabad. Same-day slots, fixed prices.";
+
 export const metadata: Metadata = {
-  title: "Help Now | CityCalls On-Demand Home Maid & Cleaning Services",
-  description:
-    "CityCalls is Ghaziabad's premier marketplace for trusted, background-verified home services. Book AC repair, deep cleaning, pest control, salon at home, and more in under 60 minutes.",
+  metadataBase: new URL(SITE_URL),
+  title: DEFAULT_TITLE,
+  description: DEFAULT_DESCRIPTION,
   keywords: [
-    "home services",
-    "appliance repair",
-    "pest control",
-    "deep cleaning",
-    "sofa cleaning",
-    "salon at home",
-    "Ghaziabad services",
+    "house help",
+    "home cleaning services in Delhi NCR",
+    "hourly house help",
+    "dish washing service",
+    "kitchen helper at home",
+    "bathroom cleaning service",
+    "laundry and ironing at home",
+    "domestic help Noida",
+    "house help Gurugram",
+    "home cleaning Ghaziabad",
+    "Help Now",
     "CityCalls",
   ],
   authors: [{ name: "CityCalls" }],
   openGraph: {
-    title: "CityCalls — Fast & Reliable Home Services",
-    description:
-      "Verified professionals. Transparent pricing. Doorstep service across Ghaziabad in under 60 minutes. Book your service today.",
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
     type: "website",
-    siteName: "CityCalls",
+    siteName: SITE_NAME,
+    locale: "en_IN",
+    images: [{ url: "/assets/Banner/h1.png", width: 1881, height: 836, alt: "Help Now helper cleaning a home in Delhi NCR" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "CityCalls | Trusted Home Services",
-    description: "Ghaziabad's top-rated home services marketplace. Book AC repair, cleaning, pest control and more instantly.",
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    images: ["/assets/Banner/h1.png"],
   },
   icons: {
     icon: [
@@ -46,11 +61,13 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // Hourly rates for every price on the site (Admin → Help Now → Popular Services).
+  const rates = await fetchHelpNowRates();
   return (
     <html lang="en" className={inter.variable}>
       <body>
-        {children}
+        <HelpNowRatesProvider rates={rates}>{children}</HelpNowRatesProvider>
       </body>
     </html>
   );

@@ -2,20 +2,41 @@
 
 import { useRef, useState } from "react";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
-import { Home, CalendarDays, MapPin, CreditCard, CheckCircle2 } from "lucide-react";
+import {
+  Home, CalendarDays, MapPin, CreditCard, CheckCircle2, ClipboardList, UserCheck, Sparkles, Clock, ShieldCheck, type LucideIcon,
+} from "lucide-react";
+import { splitHighlight, type HelpNowSteps } from "@/lib/api/helpNowHome";
 
-const steps = [
-  { icon: Home, number: "01", title: "Choose Service", desc: "Select the service you need from our wide range of cleaning options." },
-  { icon: CalendarDays, number: "02", title: "Select Date & Time", desc: "Pick your preferred date and convenient time slot for the service." },
-  { icon: MapPin, number: "03", title: "Add Details", desc: "Enter your address and any additional details about your home." },
-  { icon: CreditCard, number: "04", title: "Make Payment", desc: "Pay securely online via UPI, card, or net banking. Safe & easy." },
-  { icon: CheckCircle2, number: "05", title: "Maid Arrives", desc: "Your verified maid arrives on time and clean. Guaranteed satisfaction." },
-];
+const ICONS: Record<string, LucideIcon> = { Home, CalendarDays, MapPin, CreditCard, CheckCircle2, ClipboardList, UserCheck, Sparkles, Clock, ShieldCheck };
+
+// Built-in content, shown if the CMS (Admin → Website Section → Help Now →
+// Booking Steps) can't be reached.
+const defaultSteps: HelpNowSteps = {
+  eyebrow: "Your Guide",
+  heading: "Simple Steps to Book House Help",
+  highlight: "House Help",
+  items: [
+    { icon: "Home", title: "Choose Service", description: "Select the service you need from our wide range of cleaning options." },
+    { icon: "CalendarDays", title: "Select Date & Time", description: "Pick your preferred date and convenient time slot for the service." },
+    { icon: "MapPin", title: "Add Details", description: "Enter your address and any additional details about your home." },
+    { icon: "CreditCard", title: "Make Payment", description: "Pay securely online via UPI, card, or net banking — or after the service." },
+    { icon: "CheckCircle2", title: "Helper Arrives", description: "Your verified helper arrives on time and ready to work. Guaranteed satisfaction." },
+  ],
+};
 
 // Scroll-driven: as the section moves up the screen a gold line fills along
 // the steps (left → right, top → bottom on phones) and each step lights up
 // when the line reaches it. Cards rise in one after another.
-export function HowItWorks() {
+// `content` comes from the CMS via the home page: undefined means it couldn't
+// be reached (built-in content), null means it's switched off.
+export function HowItWorks({ content = defaultSteps }: { content?: HelpNowSteps | null } = {}) {
+  const steps = (content?.items ?? []).map((item, i) => ({
+    icon: ICONS[item.icon] ?? CheckCircle2,
+    number: String(i + 1).padStart(2, "0"),
+    title: item.title,
+    desc: item.description,
+  }));
+  const [before, highlight, after] = splitHighlight(content?.heading ?? "", content?.highlight ?? "");
   const sectionRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start 0.85", "center 0.45"] });
@@ -28,6 +49,7 @@ export function HowItWorks() {
     setReached(value <= 0.02 ? 0 : next);
   });
   const lit = (i: number) => reduceMotion || i < reached;
+  if (!content || steps.length === 0) return null;
 
   return (
     <section ref={sectionRef} id="how-it-works" className="relative overflow-hidden bg-[#fffbf2] px-4 py-16 md:px-6 md:py-20">
@@ -43,9 +65,11 @@ export function HowItWorks() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="mb-12 text-center md:mb-16"
         >
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#f5a623]">Your Guide</p>
+          {content.eyebrow && <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#f5a623]">{content.eyebrow}</p>}
           <h2 className="text-[clamp(24px,3.5vw,36px)] font-extrabold tracking-tight text-[#1a1a1a]">
-            Simple Steps to Book a <span className="text-[#f5a623]">Maid</span>
+            {before}
+            {highlight && <span className="text-[#f5a623]">{highlight}</span>}
+            {after}
           </h2>
         </motion.div>
 

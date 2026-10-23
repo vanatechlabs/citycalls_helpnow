@@ -52,13 +52,51 @@ export interface HelpNowTestimonial {
   color: string;
 }
 
+// "Our Popular Services": one card per service (name and rate come from
+// data/helpNowServices.ts — the booking prices).
+export interface HelpNowPopular {
+  eyebrow: string;
+  heading: string;
+  highlight: string;
+  description: string;
+  cards: { slug: string; description: string; image: string; alt: string; badge: string }[];
+}
+
+// "Simple Steps to Book" — `icon` is a lucide-react name.
+export interface HelpNowSteps {
+  eyebrow: string;
+  heading: string;
+  highlight: string;
+  items: { icon: string; title: string; description: string }[];
+}
+
+// The text around the "Fair Pricing" calculator.
+export interface HelpNowPricingText {
+  eyebrow: string;
+  heading: string;
+  highlight: string;
+  description: string;
+  perks: { icon: string; title: string; text: string }[];
+  note: string;
+}
+
 export interface HelpNowHomeContent {
   hero: { slides: HelpNowHeroSlide[] };
   marquee: HelpNowMarquee | null;
   about: HelpNowAbout | null;
   services: HelpNowServiceCards | null;
   faq: HelpNowFaq | null;
+  popular: HelpNowPopular | null;
+  steps: HelpNowSteps | null;
+  pricing: HelpNowPricingText | null;
   testimonials: HelpNowTestimonial[];
+}
+
+// Splits a heading around its highlight: [before, highlight, after].
+export function splitHighlight(heading: string, highlight: string): [string, string, string] {
+  const index = highlight ? heading.indexOf(highlight) : -1;
+  if (index < 0) return [heading, "", ""];
+  return [heading.slice(0, index), highlight, heading.slice(index + highlight.length)];
 }
 
 const API_ORIGIN = API_BASE_URL.replace(/\/api\/v1$/, "");

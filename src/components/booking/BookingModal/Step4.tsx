@@ -178,7 +178,7 @@ export function Step4({ b }: { b: HelpNowBooking }) {
 
           <div className="flex items-center justify-between gap-3 text-[11.5px] text-slate-700">
             <span>
-              Base Hourly Fare ({b.helpers} Maid{b.helpers > 1 ? "s" : ""} × {b.hours} hr{b.hours > 1 ? "s" : ""} @ ₹{service.ratePerHour}/hr)
+              Base Hourly Fare ({b.helpers} Helper{b.helpers > 1 ? "s" : ""} × {b.hours} hr{b.hours > 1 ? "s" : ""} @ ₹{b.ratePerHour}/hr)
             </span>
             <span className="font-bold text-[#2563eb]">₹{b.baseFare}</span>
           </div>

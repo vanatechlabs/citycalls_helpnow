@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { Fragment, useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import {
   ArrowRight,
   ChevronLeft,
@@ -15,29 +15,71 @@ import {
 } from "lucide-react";
 import { helpNowServices, type HelpNowServiceSlug } from "@/data/helpNowServices";
 import { BookingModal } from "@/components/booking/BookingModal";
+import { helpNowImageUrl, splitHighlight, type HelpNowPopular } from "@/lib/api/helpNowHome";
+import { useHelpNowRates } from "@/components/rates/HelpNowRates";
 
-// One card per Help Now service page; the hover image is the next service's.
-const services = helpNowServices.map((service, i) => ({
-  id: i + 1,
-  slug: service.slug,
-  href: `/services/${service.slug}`,
-  name: service.name,
-  short: service.short,
-  price: `₹${service.ratePerHour}/hr`,
-  popular: service.slug === "dish-washing",
-  image: service.image,
-  hoverImage: helpNowServices[(i + 1) % helpNowServices.length].image,
-}));
+// Built-in content, shown if the CMS (Admin → Website Section → Help Now →
+// Popular Services) can't be reached.
+const defaultPopular: HelpNowPopular = {
+  eyebrow: "Our Popular Services",
+  heading: "Choose Your Cleaning Service — one tap away.",
+  highlight: "— one tap away.",
+  description: "Verified helpers, transparent pricing, and flexible booking for every home cleaning need.",
+  cards: helpNowServices.map((service) => ({
+    slug: service.slug,
+    description: service.short,
+    image: service.image,
+    alt: `${service.name} by a Help Now helper`,
+    badge: service.slug === "dish-washing" ? "Most Booked" : "",
+  })),
+};
 
-const headingWords = ["Choose", "Your", "Cleaning", "Service"];
-const highlightWords = ["—", "one", "tap", "away."];
+// One card per service, in the admin's order; name and price are always the
+// booking ones. The hover image is the next card's.
+function cardsFrom(popular: HelpNowPopular, rateOf: (slug: string) => number) {
+  const cards = popular.cards.flatMap((card) => {
+    const service = helpNowServices.find((s) => s.slug === card.slug);
+    return service ? [{ card, service }] : [];
+  });
+  const imageOf = ({ card, service }: (typeof cards)[number]) => (card.image ? helpNowImageUrl(card.image, 640) : service.image);
+  return cards.map((entry, i) => ({
+    id: i + 1,
+    slug: entry.service.slug,
+    href: `/services/${entry.service.slug}`,
+    name: entry.service.name,
+    short: entry.card.description || entry.service.short,
+    price: `₹${rateOf(entry.service.slug)}/hr`,
+    badge: entry.card.badge,
+    image: imageOf(entry),
+    alt: entry.card.alt || entry.service.name,
+    hoverImage: imageOf(cards[(i + 1) % cards.length]),
+  }));
+}
+
+// Words of a heading part, each rising from its own mask; real spaces between
+// them so the heading reads as text.
+function Words({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/\s+/).filter(Boolean).map((word, i) => (
+        <Fragment key={i}>
+          <span className="inline-block overflow-hidden align-bottom">
+            <motion.span variants={wordVariants} className="inline-block">
+              {word}
+            </motion.span>
+          </span>{" "}
+        </Fragment>
+      ))}
+    </>
+  );
+}
 
 const lineVariants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
 };
 
-const wordVariants: any = {
+const wordVariants: Variants = {
   hidden: { y: "100%", opacity: 0 },
   visible: {
     y: "0%",
@@ -46,7 +88,11 @@ const wordVariants: any = {
   },
 };
 
-export function ServicesGrid() {
+// `popular` comes from the CMS via the home page: undefined means it couldn't
+// be reached (built-in content), null means it's switched off.
+export function ServicesGrid({ popular = defaultPopular }: { popular?: HelpNowPopular | null } = {}) {
+  const services = cardsFrom(popular ?? defaultPopular, useHelpNowRates());
+  const [before, highlight, after] = splitHighlight(popular?.heading ?? "", popular?.highlight ?? "");
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -77,7 +123,9 @@ export function ServicesGrid() {
     }, 28);
 
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, services.length]);
+
+  if (!popular || services.length === 0) return null;
 
   const handleOpenBooking = (slug: HelpNowServiceSlug) => {
     setSelectedSlug(slug);
@@ -108,7 +156,7 @@ export function ServicesGrid() {
               >
                 <div className="h-px w-8 bg-[#f5a623]" />
                 <span className="uppercase tracking-[0.3em] text-[#b5730f] font-bold text-[12px]">
-                  Our Popular Services
+                  {popular.eyebrow}
                 </span>
                 <div className="h-px w-8 bg-[#f5a623]" />
               </motion.div>
@@ -122,16 +170,10 @@ export function ServicesGrid() {
                     viewport={{ once: true }}
                     className="inline"
                   >
-                    {headingWords.map((word, i) => (
-                      <span key={i} className="inline-block overflow-hidden align-bottom mr-[0.28em]">
-                        <motion.span variants={wordVariants} className="inline-block">
-                          {word}
-                        </motion.span>
-                      </span>
-                    ))}
+                    <Words text={before} />
                   </motion.span>
-                </span>{" "}
-                <span className="text-[#f5a623] relative inline-block">
+                </span>
+                {highlight && <span className="text-[#f5a623] relative inline-block">
                   <span className="inline overflow-hidden">
                     <motion.span
                       variants={lineVariants}
@@ -141,13 +183,7 @@ export function ServicesGrid() {
                       transition={{ delayChildren: 0.35 }}
                       className="inline"
                     >
-                      {highlightWords.map((word, i) => (
-                        <span key={i} className="inline-block overflow-hidden align-bottom mr-[0.28em]">
-                          <motion.span variants={wordVariants} className="inline-block">
-                            {word}
-                          </motion.span>
-                        </span>
-                      ))}
+                      <Words text={highlight} />
                     </motion.span>
                   </span>
                   <motion.svg
@@ -167,12 +203,15 @@ export function ServicesGrid() {
                       strokeLinecap="round"
                     />
                   </motion.svg>
-                </span>
+                </span>}
+                {after && <> {after}</>}
               </h2>
 
-              <p className="text-slate-500 text-[14px] leading-relaxed max-w-2xl mt-2 font-medium">
-                Verified maids, transparent pricing, and flexible booking for every home cleaning need.
-              </p>
+              {popular.description && (
+                <p className="text-slate-500 text-[14px] leading-relaxed max-w-2xl mt-2 font-medium">
+                  {popular.description}
+                </p>
+              )}
             </div>
 
             {/* Carousel Controls */}
@@ -230,7 +269,7 @@ export function ServicesGrid() {
                         {/* Default Image */}
                         <img
                           src={service.image}
-                          alt={service.name}
+                          alt={service.alt}
                           className={`w-full h-full object-cover absolute inset-0 transition-all duration-700 ${
                             hoveredId === index ? "opacity-0 scale-110" : "opacity-100 scale-100"
                           }`}
@@ -246,17 +285,17 @@ export function ServicesGrid() {
                         />
                       </button>
 
-                      {/* Most Booked Badge */}
-                      {service.popular && (
+                      {/* Badge, e.g. "Most Booked" */}
+                      {service.badge && (
                         <div className="absolute top-2.5 right-2.5 bg-gradient-to-r from-[#f5a623] to-[#e07a1f] text-white px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider shadow-sm z-10 flex items-center gap-1 pointer-events-none">
-                          <Sparkles size={10} /> Most Booked
+                          <Sparkles size={10} /> {service.badge}
                         </div>
                       )}
 
                       {/* Hover Overlay with Icons */}
                       <div
                         className={`absolute top-2.5 right-2.5 flex gap-1.5 transition-opacity duration-300 z-20 ${
-                          hoveredId === index && !service.popular ? "opacity-100" : "opacity-0"
+                          hoveredId === index && !service.badge ? "opacity-100" : "opacity-0"
                         }`}
                       >
                         <button className="p-1.5 bg-white/95 rounded-full hover:bg-white text-slate-800 transition-colors shadow-md cursor-pointer">

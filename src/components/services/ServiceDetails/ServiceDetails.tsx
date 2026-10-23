@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CalendarCheck, Check, ChevronDown, ClipboardList, CreditCard, Sparkles, UserCheck, X } from "lucide-react";
 import { helpNowServices, type HelpNowService } from "@/data/helpNowServices";
+import { RatePerHour } from "@/components/rates/HelpNowRates";
 
 function SectionHeading({ eyebrow, title, accent }: { eyebrow: string; title: string; accent: string }) {
   return (
@@ -122,7 +123,7 @@ export function MoreServices({ current }: { current: HelpNowService["slug"] }) {
                   <service.icon className="h-3.5 w-3.5 shrink-0" /> {service.name}
                 </h3>
                 <p className="mt-1 flex items-center justify-between text-[11px] font-semibold text-slate-500">
-                  ₹{service.ratePerHour}/hr <ArrowRight className="h-3.5 w-3.5 text-[#f5a623] transition-transform group-hover:translate-x-0.5" />
+                  ₹<RatePerHour slug={service.slug} />/hr <ArrowRight className="h-3.5 w-3.5 text-[#f5a623] transition-transform group-hover:translate-x-0.5" />
                 </p>
               </div>
             </Link>

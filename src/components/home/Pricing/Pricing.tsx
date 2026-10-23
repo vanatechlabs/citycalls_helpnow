@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, BadgeCheck, BadgePercent, CalendarClock, Check, Loader2, Minus, Plus, Tag, Wallet } from "lucide-react";
+import {
+  ArrowRight, BadgeCheck, BadgePercent, CalendarClock, Check, Clock, Loader2, Minus, Plus, ShieldCheck, Sparkles, Star, Tag, Wallet, type LucideIcon,
+} from "lucide-react";
 import { helpNowServices, type HelpNowServiceSlug } from "@/data/helpNowServices";
 import { BookingModal } from "@/components/booking/BookingModal";
 import { fetchHelpNowCoupons, fetchHelpNowQuote, type HelpNowCoupon } from "@/lib/api/helpNowBookings";
+import { splitHighlight, type HelpNowPricingText } from "@/lib/api/helpNowHome";
+import { useHelpNowRates } from "@/components/rates/HelpNowRates";
 
 // "Fair Pricing": a cost configurator with a receipt beside it, instead of
 // another list of services (the service cards are just above). Same hourly
@@ -15,23 +19,39 @@ const HOURS = [1, 2, 3, 4, 6, 8];
 const MAX_HELPERS = 4;
 const CARD_SHADOW = "rgba(0, 0, 0, 0.02) 0px 1px 3px 0px, rgba(27, 31, 35, 0.15) 0px 0px 0px 1px";
 
-const INCLUDED = [
-  { icon: BadgeCheck, title: "Verified maids", text: "Background-checked & trained" },
-  { icon: Wallet, title: "Pay your way", text: "Online or after the service" },
-  { icon: BadgePercent, title: "Coupons", text: "Apply at checkout" },
-  { icon: CalendarClock, title: "Easy reschedule", text: "On call or WhatsApp" },
-];
+const PERK_ICONS: Record<string, LucideIcon> = { BadgeCheck, Wallet, BadgePercent, CalendarClock, ShieldCheck, Clock, Sparkles, Star };
+
+// Built-in text, shown if the CMS (Admin → Website Section → Help Now →
+// Pricing Section) can't be reached. Rates and coupons always come from the
+// booking backend.
+const defaultPricing: HelpNowPricingText = {
+  eyebrow: "Fair Pricing",
+  heading: "Know your price before you book",
+  highlight: "before you book",
+  description: "Pick a service, helpers and hours — no hidden costs.",
+  perks: [
+    { icon: "BadgeCheck", title: "Verified helpers", text: "Background-checked & trained" },
+    { icon: "Wallet", title: "Pay your way", text: "Online or after the service" },
+    { icon: "BadgePercent", title: "Coupons", text: "Apply at checkout" },
+    { icon: "CalendarClock", title: "Easy reschedule", text: "On call or WhatsApp" },
+  ],
+  note: "Rates are per helper, per hour. Need more than 8 hours? Set it in the booking form — up to 16 hours.",
+};
 
 const rupees = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 const LABEL = "mb-2 block text-[11px] font-semibold uppercase tracking-wider text-slate-500";
 
-export function Pricing() {
+// `content` comes from the CMS via the home page: undefined means it couldn't
+// be reached (built-in text), null means the section is switched off.
+export function Pricing({ content = defaultPricing }: { content?: HelpNowPricingText | null } = {}) {
+  const [before, highlight, after] = splitHighlight(content?.heading ?? "", content?.highlight ?? "");
   const [slug, setSlug] = useState<HelpNowServiceSlug>(helpNowServices[1]?.slug ?? helpNowServices[0].slug);
   const [helpers, setHelpers] = useState(1);
   const [hours, setHours] = useState(2);
   const [modalOpen, setModalOpen] = useState(false);
   const service = helpNowServices.find((s) => s.slug === slug) ?? helpNowServices[0];
-  const subtotal = service.ratePerHour * hours * helpers;
+  const rate = useHelpNowRates()(service.slug);
+  const subtotal = rate * hours * helpers;
 
   // Coupons from the backend; the discount is always priced by the backend too.
   const [coupons, setCoupons] = useState<HelpNowCoupon[]>([]);
@@ -85,6 +105,8 @@ export function Pricing() {
     };
   }, [applied, slug, hours, helpers]);
 
+  if (!content) return null;
+
   return (
     <section id="pricing" className="bg-[#f9f9f9] px-4 py-10 md:px-6 md:py-12" style={{ fontFamily: "var(--font-inter), sans-serif" }}>
       <div className="mx-auto max-w-[1100px]">
@@ -95,11 +117,13 @@ export function Pricing() {
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="mb-6 text-center"
         >
-          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f5a623]">Fair Pricing</p>
+          {content.eyebrow && <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f5a623]">{content.eyebrow}</p>}
           <h2 className="text-[clamp(22px,3vw,30px)] font-semibold tracking-tight text-[#1a1a1a]">
-            Know your price <span className="text-[#f5a623]">before you book</span>
+            {before}
+            {highlight && <span className="text-[#f5a623]">{highlight}</span>}
+            {after}
           </h2>
-          <p className="mt-1.5 text-[13px] text-slate-500">Pick a service, maids and hours — no hidden costs.</p>
+          {content.description && <p className="mt-1.5 text-[13px] text-slate-500">{content.description}</p>}
         </motion.div>
 
         <motion.div
@@ -137,13 +161,13 @@ export function Pricing() {
 
             <div className="grid gap-5 sm:grid-cols-[auto_1fr]">
               <div>
-                <span className={LABEL}>Maids</span>
+                <span className={LABEL}>Helpers</span>
                 <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200 p-1">
-                  <button type="button" aria-label="Fewer maids" disabled={helpers <= 1} onClick={() => setHelpers((n) => n - 1)} className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-50 disabled:opacity-30">
+                  <button type="button" aria-label="Fewer helpers" disabled={helpers <= 1} onClick={() => setHelpers((n) => n - 1)} className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-50 disabled:opacity-30">
                     <Minus className="h-3.5 w-3.5" />
                   </button>
                   <span className="w-8 text-center text-[14px] font-semibold text-slate-900" aria-live="polite">{helpers}</span>
-                  <button type="button" aria-label="More maids" disabled={helpers >= MAX_HELPERS} onClick={() => setHelpers((n) => n + 1)} className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-50 disabled:opacity-30">
+                  <button type="button" aria-label="More helpers" disabled={helpers >= MAX_HELPERS} onClick={() => setHelpers((n) => n + 1)} className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-50 disabled:opacity-30">
                     <Plus className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -210,15 +234,20 @@ export function Pricing() {
             )}
 
             {/* What every booking includes — fills the column to the receipt's height */}
-            <div className="mt-auto grid grid-cols-2 gap-2.5 border-t border-slate-100 pt-5 sm:grid-cols-4">
-              {INCLUDED.map(({ icon: Icon, title, text }) => (
-                <div key={title} className="rounded-xl bg-[#fffaf0] p-3 ring-1 ring-[#f5a623]/15">
-                  <Icon className="h-4.5 w-4.5 text-[#e08e0b]" />
-                  <p className="mt-2 text-[12px] font-semibold text-slate-900">{title}</p>
-                  <p className="text-[10.5px] leading-snug text-slate-500">{text}</p>
-                </div>
-              ))}
-            </div>
+            {content.perks.length > 0 && (
+              <div className="mt-auto grid grid-cols-2 gap-2.5 border-t border-slate-100 pt-5 sm:grid-cols-4">
+                {content.perks.map(({ icon, title, text }, i) => {
+                  const Icon = PERK_ICONS[icon] ?? BadgeCheck;
+                  return (
+                    <div key={i} className="rounded-xl bg-[#fffaf0] p-3 ring-1 ring-[#f5a623]/15">
+                      <Icon className="h-4.5 w-4.5 text-[#e08e0b]" />
+                      <p className="mt-2 text-[12px] font-semibold text-slate-900">{title}</p>
+                      <p className="text-[10.5px] leading-snug text-slate-500">{text}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Receipt */}
@@ -228,14 +257,14 @@ export function Pricing() {
             <dl className="mt-3 space-y-2 text-[12.5px]">
               <div className="flex justify-between">
                 <dt className="text-white/60">Rate</dt>
-                <dd className="font-semibold">{rupees(service.ratePerHour)} / hr</dd>
+                <dd className="font-semibold">{rupees(rate)} / hr</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-white/60">Hours</dt>
                 <dd className="font-semibold">× {hours}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-white/60">Maids</dt>
+                <dt className="text-white/60">Helpers</dt>
                 <dd className="font-semibold">× {helpers}</dd>
               </div>
               {applied && discount > 0 && (
@@ -269,7 +298,7 @@ export function Pricing() {
           </div>
         </motion.div>
 
-        <p className="mt-3 text-center text-[11px] text-slate-400">Rates are per maid, per hour. Need more than 8 hours? Set it in the booking form — up to 16 hours.</p>
+        {content.note && <p className="mt-3 text-center text-[11px] text-slate-400">{content.note}</p>}
       </div>
 
       {/* key: reopening with another coupon starts the form fresh */}

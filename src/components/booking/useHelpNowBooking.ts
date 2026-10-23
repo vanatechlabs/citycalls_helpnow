@@ -15,6 +15,7 @@ import {
   type HelpNowQuote,
 } from "@/lib/api/helpNowBookings";
 import { loadRazorpayCheckout, openRazorpayCheckout } from "@/lib/razorpay";
+import { useHelpNowRates } from "@/components/rates/HelpNowRates";
 
 // All state and actions of the Help Now booking flow (Service & Hours →
 // Date & Time → Personal Info → Review → Payment), shared by the booking
@@ -134,6 +135,8 @@ const FIELD_STEP: Record<string, number> = {
 };
 
 export function useHelpNowBooking(service: HelpNowService, onSummaryChange?: (summary: BookingSummary) => void, initialCoupon?: string) {
+  // The live hourly rate (Admin → Popular Services), same as the backend charges.
+  const ratePerHour = useHelpNowRates()(service.slug);
   const [step, setStep] = useState(1);
 
   // Step 1 — service & hours
@@ -183,7 +186,7 @@ export function useHelpNowBooking(service: HelpNowService, onSummaryChange?: (su
 
   const property = PROPERTY_OPTIONS.find((p) => p.id === propertyId) ?? PROPERTY_OPTIONS[0];
   const extraTimeCharge = EXTRA_TIME_OPTIONS.find((o) => o.value === extraTime)?.charge ?? 0;
-  const baseFare = service.ratePerHour * hours * helpers;
+  const baseFare = ratePerHour * hours * helpers;
   const subtotal = baseFare + extraTimeCharge;
   // A coupon quote only counts for the plan it was worked out for.
   const activeCoupon =
@@ -463,6 +466,7 @@ export function useHelpNowBooking(service: HelpNowService, onSummaryChange?: (su
 
   return {
     service,
+    ratePerHour,
     step,
     goTo,
     error,

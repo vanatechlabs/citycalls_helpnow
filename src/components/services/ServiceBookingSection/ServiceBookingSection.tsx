@@ -5,6 +5,7 @@ import { BadgeCheck, MessageCircle, Phone, ShieldCheck } from "lucide-react";
 import { findHelpNowService, type HelpNowServiceSlug } from "@/data/helpNowServices";
 import { HelpNowBookingFlow } from "@/components/booking/HelpNowBookingFlow";
 import type { BookingSummary } from "@/components/booking/useHelpNowBooking";
+import { useHelpNowRates } from "@/components/rates/HelpNowRates";
 
 // Same card shadow as the booking form.
 const CARD_SHADOW = "rgba(0, 0, 0, 0.02) 0px 1px 3px 0px, rgba(27, 31, 35, 0.15) 0px 0px 0px 1px";
@@ -21,6 +22,7 @@ const WHY_HELP_NOW = [
 // be passed from a server component.
 export function ServiceBookingSection({ slug }: { slug: HelpNowServiceSlug }) {
   const [summary, setSummary] = useState<BookingSummary | null>(null);
+  const rateOf = useHelpNowRates();
   const service = findHelpNowService(slug);
   if (!service) return null;
 
@@ -46,7 +48,7 @@ export function ServiceBookingSection({ slug }: { slug: HelpNowServiceSlug }) {
               <div className="flex justify-between gap-3">
                 <dt className="font-medium text-slate-500">Rate</dt>
                 <dd className="font-semibold text-slate-800">
-                  <span className="text-[#b5730f]">₹{service.ratePerHour}</span> / hour / maid
+                  <span className="text-[#b5730f]">₹{rateOf(service.slug)}</span> / hour / helper
                 </dd>
               </div>
               {summary && (
